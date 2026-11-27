@@ -27,7 +27,10 @@ layout(location = 0) out vec2 motion;
 void main() {
     const uint scene = floatBitsToUint(texelFetch(scene_depth, ivec2(gl_FragCoord.xy), 0).r);
     const uint here = floatBitsToUint(gl_FragCoord.z);
-    if (max(scene, here) - min(scene, here) > pc.tolerance || before.w <= 1e-6) discard;
+    // (a draw in front of the scene's depth keeps its motion; one behind it by more than the tolerance is hidden. Translucent
+    // draws write no depth (Link's bangs): with a two-sided test their pixels took the background's motion and the temporal
+    // upscalers' and frame generation's frames smeared them. The game's depth is 0 at the near plane)
+    if (max(scene, here) - scene > pc.tolerance || before.w <= 1e-6) discard;
     const vec2 size = vec2(uintBitsToFloat(data.w[34]), uintBitsToFloat(data.w[35]));
     const vec2 jitter = vec2(uintBitsToFloat(data.w[32]), uintBitsToFloat(data.w[33]));
     const vec2 now = vec2(gl_FragCoord.x / size.x * 2.0 - 1.0, 1.0 - gl_FragCoord.y / size.y * 2.0) - jitter;
