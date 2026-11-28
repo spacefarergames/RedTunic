@@ -90,8 +90,14 @@ bool memory_has_shadow(uint64_t, uint64_t) { return shadow; }
 bool memory_writeback_ever(uint64_t, uint64_t) { return gpu_written; }
 bool memory_written_since(uint64_t, uint64_t, uint32_t prior) { return prior < gen; }
 uint32_t memory_generation() { return gen; }
-const uint8_t* guest_bytes(uint64_t, uint64_t, std::vector<uint8_t>&) {
+static size_t incoming_capacity;
+const uint8_t* guest_bytes(uint64_t, uint64_t n, std::vector<uint8_t>& scratch) {
     ++reads;
+    incoming_capacity = scratch.capacity();
+    if (n > bytes.size()) {
+        scratch.assign(n, 0);
+        return scratch.data();
+    }
     return bytes.data();
 }
 %s
@@ -108,6 +114,13 @@ int main() {
     shadow = false;
     gpu_written = true;
     assert(reuse_blocks_hash(64, 64) != changed && reads == 4);
+    constexpr uint64_t large = 32ull << 20;
+    const auto large_hash = reuse_blocks_hash(64, large);
+    assert(reuse_blocks_hash(64, large) == large_hash);
+    assert(incoming_capacity == 0);
+    reuse_blocks_hash(64, 64);
+    assert(incoming_capacity == 0);
+
 }
 """
 

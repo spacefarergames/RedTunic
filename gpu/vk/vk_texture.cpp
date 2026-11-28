@@ -2779,7 +2779,11 @@ uint64_t reuse_blocks_hash(uint64_t guest, uint64_t total) {
             return entry.hash;
         }
     }
-    static thread_local std::vector<uint8_t> scratch;
+    // Keep the ordinary hash buffer hot, but return large split-texture copies
+    // once their hash is complete. Contiguous textures still hash in place.
+    static thread_local std::vector<uint8_t> small_scratch;
+    std::vector<uint8_t> large_scratch;
+    auto& scratch = total < (32ull << 20) ? small_scratch : large_scratch;
     astc_reuse::Hasher h;
     for (uint64_t at = 0; at < total; at += 64ull << 20) {
         const uint64_t n = std::min<uint64_t>(64ull << 20, total - at);
