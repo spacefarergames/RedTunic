@@ -38,13 +38,17 @@ def fixture(source):
     controls = "\n".join(definition(menu, signature) for signature in (
         "void apply_preset", "void apply_auto"))
     auto_members = sorted(set(re.findall(r"opts\.(\w+)\s*=", controls)) & names.keys())
+    # Choosing a standard preset clears the Deck label, which is an opt-in control.
+    auto_members = [member for member in auto_members if member != "deck_preset"]
+    opt_in = ["deck_preset"] if "deck_preset" in names else []
+
     text_functions = {
         "ultrawide": "tx_ultrawide", "output_res": "tx_output_res", "resolution": "tx_resolution",
         "dlss": "tx_upscaler", "dlss_model": "tx_dlss_model", "preset": "tx_preset", "gpu_device": "tx_gpu", "mic": "tx_mic",
     }
     # (the rows a preset sets whose texts are fixed: the built-in defaults for a Custom player Auto never chose for)
     preset_rows = ["sharpness", "pace", "realtime", "handheld"]
-    members = list(dict.fromkeys(["ultrawide", "output_res", "resolution", "dlss", *auto_members, *preset_rows,
+    members = list(dict.fromkeys(["ultrawide", "output_res", "resolution", "dlss", *auto_members, *preset_rows, *opt_in,
                                  "framegen_by", "game_lang", "dlss_model", "gpu_device", "mic", "fov"]))
     rows = "\n".join('    {TAB_GRAPHICS, "%s", &opts.%s, 0, 100, 1, %s, nullptr},' %
                      (names[member], member, text_functions.get(member, "tx_number")) for member in members)
@@ -68,6 +72,8 @@ def fixture(source):
     unchanged = " && ".join("opts.%s == before.%s" % (member, member) for member in re.findall(r"\bint (\w+)\s*=", options))
     auto_checks = "\n".join('        CHECK(pc.find("%s: ") != std::string::npos, "Auto-controlled %s missing");' %
                             (names[member], member) for member in auto_members)
+    if opt_in:
+        auto_checks += '\n        CHECK(pc.find("Steam Deck preset: ") == std::string::npos, "opt-in Deck row marked Auto-controlled");'
     return r'''#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
