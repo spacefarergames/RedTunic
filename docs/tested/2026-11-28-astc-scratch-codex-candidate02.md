@@ -1,0 +1,3 @@
+| Date | Build | OS / desktop | GPU / driver | CPU / RAM | Settings | Where | Result |
+|---|---|---|---|---|---|---|---|
+| 2026-11-28 | Host f7c8db9f, optimized renderer with 73f2fc6f and a72c9932 | Windows 11 build 26300, headless | Radeon Vega 1002:15e7, AMD 26.5.2 | Ryzen 5 5625U, 15.4 GiB usable | 1280×720, frame generation off, `RX_VK_PRECOMPILE=0`, isolated runtime and test cache | Hyrule Field, Adult Link, copied save, 120 frames after a right-stick input | Candidate 02 completed: 65.85 ms median, 216.98 ms p95, 3.41 GiB process working set and 8.94 GiB private commit at the end of the sample. Both baseline runs and candidate 01 timed out during the frame wait while pipelines were compiling. There is no matched RAM or frame-time result. |
